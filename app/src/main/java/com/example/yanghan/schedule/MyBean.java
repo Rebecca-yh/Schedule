@@ -5,7 +5,7 @@ import android.content.Intent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MyBean {
+public class MyBean implements Comparable{
 
     public static final String KEY_ID="key_id";
     public static final String HOUR1="hour1";
@@ -13,19 +13,25 @@ public class MyBean {
     public static final String MINUTE1="minute1";
     public static final String MINUTE2="minute2";
     public static final String TEXT="text";
+    public static final String SUBJECT="subject";
 
+    public static final String DATE="date";
+    public static final String NOTIFICATION="notification";
 
    public int hour1;
+    public String subject;
     public int minute1;
     public int hour2;
     public int minute2;
     public String text;
-    public String TABLE;
+    public String date;
     public int key_id;
+    public float fTime;
+    public boolean notification;
 
-    public MyBean(Intent data, String date) {
+    public MyBean(Intent data, String day) {
 
-        TABLE=new String("T"+date);
+        date=new String(day);
 
         hour1=data.getIntExtra("hour1",-1);
         hour2=data.getIntExtra("hour2",-1);
@@ -75,7 +81,19 @@ public class MyBean {
     }
     public String getSubject()
     {
-        return text;
+        return subject;
+    }
+    public int compareTo(Object o) {
+        MyBean s = (MyBean) o;
+        this.fTime=this.hour1+((float)this.minute1)*(float)0.01;
+        s.fTime=s.hour1+((float)s.minute1)*(float)0.01;
+        if (this.fTime > s.fTime) {
+            return 1;
+        }
+        else if (this.fTime < s.fTime) {
+            return -1;
+        }
+       return 1;
     }
 
 }

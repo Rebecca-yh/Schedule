@@ -173,10 +173,7 @@ public class SlideLayout extends FrameLayout {
         }
     }
 
-    /**
-     * computeScroll：主要功能是计算拖动的位移量、更新背景、设置要显示的屏幕(setCurrentScreen(mCurrentScreen);)。
-     * 重写computeScroll()的原因：调用startScroll()是不会有滚动效果的，只有在computeScroll()获取滚动情况，做出滚动的响应
-     */
+    //滚动效果
     @Override
     public void computeScroll() {
         super.computeScroll();

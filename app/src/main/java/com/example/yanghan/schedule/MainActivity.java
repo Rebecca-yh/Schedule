@@ -2,21 +2,30 @@ package com.example.yanghan.schedule;
 
 import android.app.Activity;
 import android.app.AlarmManager;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CalendarView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 
 import android.widget.BaseAdapter;
@@ -26,11 +35,18 @@ public class MainActivity extends AppCompatActivity {
     private ListView lv_main;
     private ArrayList<MyBean> myBeans;
     private MyAdapter myAdapter;
+    private int year;
+    private int month;
+    private int day;
+    private Context con;
 
     SimpleDateFormat curDate ;
     String date;
-    DateRepo repo;
+    Repo repo;
     TextView dateTV;
+    LinearLayout list;
+    boolean opencalendar;
+    ConstraintLayout.LayoutParams lp;
 
     @Override
    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -40,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         {
 
             MyBean new_bean=new MyBean();
-            new_bean.TABLE=new String("T"+date);
+            new_bean.date=new String(date);
 
             Log.i("insert","!");
             new_bean.hour1=data.getIntExtra("hour1",-1);
@@ -48,61 +64,45 @@ public class MainActivity extends AppCompatActivity {
             new_bean.minute1=data.getIntExtra("minute1",-1);
             new_bean.minute2=data.getIntExtra("minute2",-1);
             new_bean.text=data.getStringExtra("text");
+            new_bean.subject=data.getStringExtra("subject");
             new_bean.key_id=repo.insert(new_bean);
+            new_bean.notification=data.getBooleanExtra("notice",false);
             myBeans.add(new_bean);
+            Collections.sort(myBeans);
             myAdapter.notifyDataSetChanged();
-            /*Intent intent = new Intent(this, AlarmReceiver.class);
-            intent.setAction("NOTIFICATION");
-            PendingIntent pi = PendingIntent.getBroadcast(this, 0, intent, 0);
+            if(data.getBooleanExtra("notice",false))
+            {
+                String timeString = " "+new_bean.getTime();
+                Date DATE=new Date();
+                try
+                {
+                    Log.i("get","date");
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd hh:mm");
+                    DATE= sdf.parse(date+timeString);
+                }
+                catch (ParseException e)
+                {
+                    System.out.println(e.getMessage());
+                }
+                Intent intent = new Intent(this, AlarmReceiver.class);
+                intent.setAction("NOTIFICATION");
+                intent.putExtra("subject",new_bean.subject);
+                intent.putExtra("key_id",new_bean.key_id);
+                PendingIntent pi = PendingIntent.getBroadcast(this, 0, intent, 0);
 
-            AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            int type = AlarmManager.RTC_WAKEUP;
-            //new Date()：表示当前日期，可以根据项目需求替换成所求日期
-            //getTime()：日期的该方法同样可以表示从1970年1月1日0点至今所经历的毫秒数
-            long triggerAtMillis = new Date().getTime();
-            //修改！！！
-            long intervalMillis = 1000 * 60;
-            manager.setInexactRepeating(type, triggerAtMillis, intervalMillis, pi);*/
+                AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                int type = AlarmManager.RTC_WAKEUP;
+                long triggerAtMillis = DATE.getTime();
+                //修改！！！
+                long intervalMillis = 1000 * 60;
+
+                manager.set(type, triggerAtMillis, pi);
+            }
+
             //储存
 
         }
 
-        if(requestCode==1&resultCode== Activity.RESULT_OK)
-        {
-            int year=data.getIntExtra("year",-1);
-            int month=data.getIntExtra("month",-1);
-            int day=data.getIntExtra("day",-1);
-            if(year==0)
-            {
-                date=curDate.format(new java.util.Date());
-                String s=new String();
-                ArrayList<String> tmp=new ArrayList<String>();
-                for(int i=0;i<date.length();i++){
-                    if(date.charAt(i)!=95 ){
-                        s+=date.charAt(i);
-                    }
-                    else
-                    {
-                        tmp.add(s);
-                        s="";
-                    }
-                }
-                tmp.add(s);
-                dateTV.setText(" "+tmp.get(0)+"年"+tmp.get(1)+"月"+tmp.get(2)+"日");
-
-
-            }
-            else{
-                date=Integer.toString(year)+"_"+Integer.toString(month)+"_"+Integer.toString(day);
-                dateTV.setText(" "+year+"年"+month+"月"+day+"日");
-            }
-
-            repo.change(date);
-
-
-            myBeans = repo.getItemList();
-            myAdapter.notifyDataSetChanged();
-        }
     }
 
     @Override
@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        con=this;
         curDate =  new SimpleDateFormat("yyyy_MM_dd");
         date=curDate.format(new java.util.Date());
         Log.i("date",date);
@@ -117,6 +118,25 @@ public class MainActivity extends AppCompatActivity {
 
         dateTV=(TextView)findViewById(R.id.dateTV);
 
+        final CalendarView calendarView= (CalendarView)findViewById(R.id.calendarView);
+
+        calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+            @Override
+            public void onSelectedDayChange(@NonNull CalendarView calendarView, int i, int i1, int i2) {
+                year=i;
+                month=i1+1;
+                day=i2;
+                date=Integer.toString(year)+"_"+Integer.toString(month)+"_"+Integer.toString(day);
+                dateTV.setText(" "+year+"年"+month+"月"+day+"日");
+                repo.change(date);
+
+
+                myBeans = repo.getItemList();
+                Collections.sort(myBeans);
+
+                myAdapter.notifyDataSetChanged();
+            }
+        });
 
         String s=new String();
         ArrayList<String> tmp=new ArrayList<String>();
@@ -134,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
         dateTV.setText(" "+tmp.get(0)+"年"+tmp.get(1)+"月"+tmp.get(2)+"日");
 
         // 读取
-        repo = new DateRepo(this,date);
+        repo = new Repo(this,date);
         myBeans = repo.getItemList();
 
         Log.i("size",Integer.toString(myBeans.size()));
@@ -153,15 +173,40 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        Button calendar=(Button)findViewById(R.id.calendar);
-        calendar.setOnClickListener(new View.OnClickListener() {
+
+        opencalendar=true;
+        list=(LinearLayout)findViewById(R.id.list);
+        lp=(ConstraintLayout.LayoutParams)list.getLayoutParams();
+        final Button upDown=(Button) findViewById(R.id.updown);
+        final Resources resources = this.getResources();
+        final Drawable bg1=resources.getDrawable(R.drawable.down);
+        final Drawable bg2=resources.getDrawable(R.drawable.up);
+        upDown.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent=new Intent(MainActivity.this,CalendarActivity.class);
-                startActivityForResult(intent,1);
+
+                Log.i("click","!");
+                if(opencalendar)
+                {
+                    Log.i("close","calendar");
+                    lp.setMargins(0,0,0,0);
+                    list.setLayoutParams(lp);
+                    opencalendar=false;
+                    upDown.setBackground(bg1);
+                }
+                else
+                {
+                    Log.i("open","calendar");
+                    lp.setMargins(0,800,0,0);
+                    list.setLayoutParams(lp);
+                    opencalendar=true;
+                    upDown.setBackground(bg2);
+                }
+
 
             }
         });
+
     }
     class MyAdapter extends BaseAdapter{
 
@@ -198,15 +243,7 @@ public class MainActivity extends AppCompatActivity {
                 viewHolder.subject = (TextView) convertView.findViewById(R.id.subject);
                 viewHolder.item_content=(RelativeLayout)convertView.findViewById(R.id.item_content) ;
                 viewHolder.item_menu = (TextView) convertView.findViewById(R.id.item_menu);
-                /**
-                 * setTag
-                 * 把查找的view缓存起来方便多次重用
-                 * 相当于给View对象的一个标签。XX标签可以是任何内容，我们这里把他设置成了一个对象XX。
-                 *
-                 * Tag的作用就是设置标签，标签可以是任意玩意。
-                 * 以及convertView是如何在程序中使代码运行变的效率的：利用缓存convertView尽可能少实例化
-                 * 同样结构体的对象；
-                 */
+
                 convertView.setTag(viewHolder);
             }else{
                 viewHolder = (ViewHolder) convertView.getTag();
@@ -231,13 +268,17 @@ public class MainActivity extends AppCompatActivity {
             viewHolder.item_menu.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    /**
-                     * getParent() 获取父组件
-                     * 获取爷爷组件，可以使用getParent().getParent()
-                     */
+
                     SlideLayout slideLayout = (SlideLayout) view.getParent();
                     slideLayout.closeMenu();
                     //删除
+                    if(myBean.notification)
+                    {
+                        NotificationManager manager = (NotificationManager) con
+                                .getSystemService(Context.NOTIFICATION_SERVICE);
+                        manager.cancel(myBean.key_id);
+                    }
+
                     repo.delete(myBean.key_id);
                     myBeans.remove(myBean);
 

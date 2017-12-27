@@ -1,35 +1,80 @@
 package com.example.yanghan.schedule;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 public class AlarmReceiver extends BroadcastReceiver {
 
-    private static final int NOTIFICATION_ID = 1000;
+    private int NOTIFICATION_ID = 1000;
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        NOTIFICATION_ID=intent.getIntExtra("key_id",-1);
         if (intent.getAction().equals("NOTIFICATION")) {
 
-            NotificationManager manager = (NotificationManager) context
-                    .getSystemService(Context.NOTIFICATION_SERVICE);
-            Intent intent2 = new Intent(context, MainActivity.class);
+            Log.i("receiver","true");
 
-            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent2, 0);
-            Notification notify = new NotificationCompat.Builder(context)
-                    .setSmallIcon(R.drawable.bell)
-                    .setTicker("您的***项目即将到期，请及时处理！")
-                    .setContentTitle("项目到期提醒")
-                    .setStyle(new NotificationCompat.BigTextStyle().bigText("此处注明的是有关需要提醒项目的某些重要内容"))
-                    .setContentIntent(pendingIntent)
-                    .setAutoCancel(true)
-                    .setNumber(1).build();
-            manager.notify(NOTIFICATION_ID, notify);
+            String subject=intent.getStringExtra("subject");
+            if (Build.VERSION.SDK_INT >= 26)
+            {
+                NotificationManager manager = (NotificationManager) context
+                        .getSystemService(Context.NOTIFICATION_SERVICE);
+                Intent intent2 = new Intent(context, MainActivity.class);
+
+                PendingIntent pendingIntent = PendingIntent.getActivity(context, 1, intent2, 0);
+                String id = "channel_1";
+                String description = "123";
+                int importance = NotificationManager.IMPORTANCE_HIGH;
+                NotificationChannel mChannel = new NotificationChannel(id, "123", importance);
+                manager.createNotificationChannel(mChannel);
+
+                Notification notification = new Notification.Builder(context, id).setContentTitle("Title")
+                        .setSmallIcon(R.drawable.calendar)
+                        .setContentTitle("Schedule")
+                        .setContentText(subject)
+                        .setAutoCancel(true)
+                        .setFullScreenIntent(pendingIntent,true)
+                        .setDefaults(Notification.DEFAULT_VIBRATE)
+                        .build();
+                notification.flags |=Notification.FLAG_AUTO_CANCEL;
+                Notification.Builder notificationBuilder = new Notification.Builder(context);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    notificationBuilder.setVisibility(Notification.VISIBILITY_PUBLIC);
+                    // 关联PendingIntent
+                    notificationBuilder.setFullScreenIntent(pendingIntent, false);// 横幅
+                    }
+
+                manager.notify(NOTIFICATION_ID, notification);
+            }
+
+            else
+            {
+
+                NotificationManager manager = (NotificationManager) context
+                        .getSystemService(Context.NOTIFICATION_SERVICE);
+                Intent intent2 = new Intent(context, MainActivity.class);
+
+                PendingIntent pendingIntent = PendingIntent.getActivity(context, 1, intent2, 0);
+                Notification notify = new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.bell)
+                        .setContentTitle("Schedule")
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(subject))
+                        .setFullScreenIntent(pendingIntent,true)
+                        .setAutoCancel(true)
+                        .setNumber(1).build();
+                manager.notify(NOTIFICATION_ID, notify);
+
+
+            }
+
         }
 
     }

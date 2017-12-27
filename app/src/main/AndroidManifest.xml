@@ -16,15 +16,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".addEvent"
-            android:theme="@style/Theme.AppCompat.Dialog" />
-        <activity android:name=".CalendarActivity" />
+        <activity android:name=".addEvent" />
 
         <receiver
             android:name=".AlarmReceiver"
             android:enabled="true"
-            android:exported="true"></receiver>
+            android:exported="true">
+            <intent-filter android:priority="20">
+                <action android:name="NOTIFICATION" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name=".detailActivity"></activity>
     </application>
 
 </manifest>
