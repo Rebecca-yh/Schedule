@@ -145,9 +145,7 @@ public class SlideLayout extends FrameLayout {
         return intercept;
     }
 
-    /**
-     * 打开menu
-     */
+
     public void openMenu() {
         // --->menuWidth
         int distanceX = menuWidth - getScrollX();
@@ -159,9 +157,7 @@ public class SlideLayout extends FrameLayout {
         }
     }
 
-    /**
-     * 关闭menu
-     */
+
     public void closeMenu() {
 
         int distanceX = 0 - getScrollX();

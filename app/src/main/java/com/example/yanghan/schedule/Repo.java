@@ -122,7 +122,7 @@ public class Repo {
                 myBean.text =cursor.getString(cursor.getColumnIndex(MyBean.TEXT));
                 myBean.subject=cursor.getString(cursor.getColumnIndex(MyBean.SUBJECT));
                 myBean.notification=(cursor.getInt(cursor.getColumnIndex(MyBean.NOTIFICATION))==1);
-                myBean.date=(cursor.getString(cursor.getColumnIndex(MyBean.DATE)));
+                myBean.date=DATE;
 
             }while(cursor.moveToNext());
         }

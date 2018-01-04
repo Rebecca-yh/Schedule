@@ -51,13 +51,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if(requestCode==0&resultCode== Activity.RESULT_OK)
         {
-
             MyBean new_bean=new MyBean();
             new_bean.date=new String(date);
-
             Log.i("insert","!");
             new_bean.hour1=data.getIntExtra("hour1",-1);
             new_bean.hour2=data.getIntExtra("hour2",-1);
@@ -93,16 +90,9 @@ public class MainActivity extends AppCompatActivity {
                 AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                 int type = AlarmManager.RTC_WAKEUP;
                 long triggerAtMillis = DATE.getTime();
-                //修改！！！
-                long intervalMillis = 1000 * 60;
-
                 manager.set(type, triggerAtMillis, pi);
             }
-
-            //储存
-
         }
-
     }
 
     @Override
@@ -113,6 +103,33 @@ public class MainActivity extends AppCompatActivity {
         con=this;
         curDate =  new SimpleDateFormat("yyyy_MM_dd");
         date=curDate.format(new java.util.Date());
+        String s=new String();
+        ArrayList<String> tmp=new ArrayList<>();
+        for(int i=0;i<date.length();i++){
+            if(date.charAt(i)!=95 ){
+                s+=date.charAt(i);
+            }
+            else
+            {
+                tmp.add(s);
+                s="";
+            }
+        }
+        tmp.add(s);
+        if(tmp.get(2).charAt(0)=='0')
+            s=Character.toString(tmp.get(2).charAt(1));
+        else
+            s=tmp.get(2);
+        day=Integer.parseInt(s);
+
+        if(tmp.get(1).charAt(0)=='0')
+            s=Character.toString(tmp.get(1).charAt(1));
+        else
+            s=tmp.get(1);
+        month=Integer.parseInt(s);
+
+        date=tmp.get(0)+"_"+Integer.toString(month)+"_"+Integer.toString(day);
+
         Log.i("date",date);
         lv_main = (ListView) findViewById(R.id.lv_main);
 
@@ -128,30 +145,19 @@ public class MainActivity extends AppCompatActivity {
                 day=i2;
                 date=Integer.toString(year)+"_"+Integer.toString(month)+"_"+Integer.toString(day);
                 dateTV.setText(" "+year+"年"+month+"月"+day+"日");
-                repo.change(date);
 
-
-                myBeans = repo.getItemList();
-                Collections.sort(myBeans);
-
-                myAdapter.notifyDataSetChanged();
+                repo.change(date);//切换记录的日期
+                myBeans = repo.getItemList();//读取当天的所有事件
+                Collections.sort(myBeans);//排序
+                myAdapter.notifyDataSetChanged();//更新派发器
             }
         });
 
-        String s=new String();
-        ArrayList<String> tmp=new ArrayList<String>();
-        for(int i=0;i<date.length();i++){
-            if(date.charAt(i)!=95 ){
-                s+=date.charAt(i);
-            }
-            else
-            {
-                tmp.add(s);
-                s="";
-            }
-        }
-        tmp.add(s);
-        dateTV.setText(" "+tmp.get(0)+"年"+tmp.get(1)+"月"+tmp.get(2)+"日");
+
+
+
+
+        dateTV.setText(" "+tmp.get(0)+"年"+Integer.toString(month)+"月"+Integer.toString(day)+"日");
 
         // 读取
         repo = new Repo(this,date);
@@ -161,6 +167,8 @@ public class MainActivity extends AppCompatActivity {
 
         myAdapter = new MyAdapter();
         lv_main.setAdapter(myAdapter);
+        Collections.sort(myBeans);
+        myAdapter.notifyDataSetChanged();
 
         Button add=(Button)findViewById(R.id.add);
         add.setOnClickListener(new View.OnClickListener()
@@ -225,12 +233,7 @@ public class MainActivity extends AppCompatActivity {
             return 0;
         }
 
-        /**
-         * ViewHolder的解释：
-         * 1、只是一个静态类，不是Android的API方法。
-         * 2、它的作用就在于减少不必要的调用findViewById，然后把对底下的控件引用存在ViewHolder里面，再在
-         * View.setTag(holder)把它放在view里，下次就可以直接取了。
-         */
+
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
             ViewHolder viewHolder;
@@ -260,7 +263,11 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     MyBean myBean1 = myBeans.get(position);
-
+                    Intent intent=new Intent(MainActivity.this,detailActivity.class);
+                    intent.putExtra("id",myBean1.key_id);
+                    intent.putExtra("date",date);
+                    startActivityForResult(intent,1);
+                    Log.i("click","!");
                     System.out.println("MainActivity---onClick");
                 }
             });
@@ -319,12 +326,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    /**
-     * ViewHolder的解释：
-     * 1、只是一个静态类，不是Android的API方法。
-     * 2、它的作用就在于减少不必要的调用findViewById，然后把对底下的控件引用存在ViewHolder里面，再在
-     * View.setTag(holder)把它放在view里，下次就可以直接取了。
-     */
     static class ViewHolder{
         RelativeLayout item_content;
         TextView time;
